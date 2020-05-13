@@ -37,7 +37,6 @@
 		},
 		onLoad(option){
 			this.query = option
-			console.log('option',option)
 		},
 		mounted(){
 			this.getData()

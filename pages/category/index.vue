@@ -2,12 +2,12 @@
 	<view>
 		<uni-segmented-control :current="current" :values="categoryItems" :style-type="styleType" :active-color="activeColor" @clickItem="onClickItem" />
 		<view  class="goods_box flex_wrap" >
-			<view class="goods_item" v-for="item in goodsDatas" :key="item.uid" @click="toDetail(item.uid)">
-				<image class="goods_item--cover" :src="item.imgCover"></image>
+			<view class="goods_item" v-for="item in goodsDatas" :key="item.uid" >
+				<image class="goods_item--cover" :src="item.imgCover" @click="toDetail(item.uid)"></image>
 					<view class="goods_info">
-						<view class="goods_title">{{item.title}}</view>
-						<view class="color_awark goods_price">{{item.priceNow}}</view>
-						<!-- <image class="goods_item--cart" src="/static/logo.png"></image> -->
+						<view class="goods_title" @click="toDetail(item.uid)">{{item.title}} {{categoryUid}}</view>
+						<view class="color_awark goods_price" @click="toDetail(item.uid)">{{item.priceNow}}</view>
+                        <uni-icons type="heart"  size="20" @click.stop="onAddCart(item)"/>
 					</view>
 			</view>
 		</view>
@@ -29,6 +29,7 @@
 				categoryData:[],
 				categoryItems:[],
 				goodsDatas:[],
+				categoryUid:2
 			}
 		},
 		mounted(){
@@ -37,20 +38,23 @@
 		},
 		methods: {
 			getCategoryData(){
+                let a = uni.getStorageSync('sessionId')
+                console.log('aaa',a)
 				uni.request({
 				    url: `${this.$baseApiUrl}category/all`,
+                    header:{'sessionId':a},
 				    complete: (res)=> {
-						this.categoryData = res.data.data
-						this.categoryItems = res.data.data.map(item => item.title)
+						this.categoryData = res.data.data.slice(1)
+						this.categoryItems = res.data.data.map(item => item.title).slice(1)
 					}
 				});
 			},
-			getGoodsDatas(type){
+			getGoodsDatas(){
 				uni.showLoading({  
 				    title: '加载中'  
 				});
 				uni.request({
-				    url: `${this.$baseApiUrl}product/all?pageNum=0&category=${type}`,
+				    url: `${this.$baseApiUrl}product/all?pageNum=0&categoryUid=${this.categoryUid}`,
 				    complete: (res)=> {
 						this.goodsDatas = res.data.data
 						uni.hideLoading();  
@@ -61,10 +65,39 @@
 			onClickItem(val){
 				this.categoryData.map((item,index) => {
 					if(index == val.currentIndex){
-						this.getGoodsDatas(item.title)
+						this.categoryUid = item.uid
+						this.getGoodsDatas()
 					}
 				})
 			},
+            async onAddCart(item) {
+                uni.showLoading({
+                    title: '加载中'  
+                });
+                uni.request({
+                    url: `${this.$baseApiUrl}cart/add`,
+                    header:{sessionId:uni.getStorageSync('sessionId')}, 
+                    method:"POST",
+                    data:{
+                      productId:item.uid  
+                    },
+                    complete: (res)=> {
+                        if(res.data.code == 200){
+                            uni.showToast({
+                                title: '添加成功',
+                                duration: 2000
+                            });
+                        }else{
+                            uni.showToast({
+                                icon:'none',
+                                title: res.data.msg,
+                                duration: 5000
+                            });
+                        }
+                		uni.hideLoading();  
+                	}
+                });
+            },
 			toDetail(uid){
 				uni.navigateTo({
 				    url: `/pages/detail/index?uid=${uid}`

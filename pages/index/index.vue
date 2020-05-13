@@ -8,14 +8,14 @@
 			</swiper>
 		</view>
 		<view  class="goods_box" >
-			<view class="goods_item" v-for="item in goodsDatas" :key="item.uid" @click="toDetail(item.uid)">
-				<image class="goods_item--cover" :src="item.imgCover"></image>
+			<view class="goods_item" v-for="item in goodsDatas" :key="item.uid" >
+				<image class="goods_item--cover" :src="item.imgCover" @click="toDetail(item.uid)"></image>
 				<view class="flex_between pl4 pr4">
-					<view>
+					<view @click="toDetail(item.uid)">
 						<view class="goods_title">{{item.title}}</view>
 						<text class="color_awark goods_price">{{item.priceNow}}</text>
 					</view>
-					<!-- <image class="goods_item--cart" src="/static/logo.png"></image> -->
+                    <uni-icons type="heart"  size="20" @click.stop="onAddCart(item)"/>
 				</view>
 				
 			</view>
@@ -55,6 +55,9 @@
 		onLoad() {
 
 		},
+		onShareAppMessage(){
+			
+		},
 		onPullDownRefresh() {
 		        console.log('refresh');
 		        setTimeout(function () {
@@ -67,9 +70,9 @@
 		},
 		methods: {
 			getGoodsData(){
-				console.log('进入')
+                console.log('${this.$baseApiUrl}product/all?pageNum=0&categoryUid=1',`${this.$baseApiUrl}product/all?pageNum=0&categoryUid=1`)
 				uni.request({
-				    url: `${this.$baseApiUrl}product/all?pageNum=0&category=热门`,
+				    url: `${this.$baseApiUrl}product/all?pageNum=0&categoryUid=1`,
 				    complete: (res)=> {
 						console.log('res',res)
 						this.goodsDatas = res.data.data
@@ -79,10 +82,38 @@
 			getBanner(){
 				uni.request({
 				    url: `${this.$baseApiUrl}banner/all`,
-				    complete: (res)=> {
+				    success: (res)=> {
 						this.bannerDatas = res.data.data
-					}
+					},
 				});
+			},
+			async onAddCart(item) {
+			    uni.showLoading({
+			        title: '加载中'  
+			    });
+			    uni.request({
+			        url: `${this.$baseApiUrl}cart/add`,
+			        header:{sessionId:uni.getStorageSync('sessionId')}, 
+			        method:"POST",
+			        data:{
+			          productId:item.uid  
+			        },
+			        complete: (res)=> {
+                        if(res.data.code == 200){
+                            uni.showToast({
+                                title: '添加成功',
+                                duration: 2000
+                            });
+                        }else{
+                            uni.showToast({
+                                icon:'none',
+                                title: res.data.msg,
+                                duration: 5000
+                            });
+                        }
+			    		uni.hideLoading();  
+			    	}
+			    });
 			},
 			toDetail(uid){
 				uni.navigateTo({
@@ -158,7 +189,7 @@
 		height:400rpx;
 	}
 	.goods_item--cart{
-		width: 40rpx;
-		height: 40rpx;
+		width: 80rpx;
+		height: 80rpx;
 	}
 </style>

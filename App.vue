@@ -1,6 +1,12 @@
 <script>
+   import {mapGetters,mapMutations} from 'vuex'
 	export default {
 		onLaunch: function() {
+            let userInfo = uni.getStorageSync('userInfo')
+            if(userInfo){
+                 console.log('进入刷新有缓存的状态',userInfo)
+                 this.setUserInfo(userInfo)
+            }
 			console.log('App Launch')
 		},
 		onShow: function() {
@@ -8,7 +14,12 @@
 		},
 		onHide: function() {
 			console.log('App Hide')
-		}
+		},
+        methods:{
+            ...mapMutations({
+                setUserInfo: "SET_USER_INFO",
+            }),
+        }
 	}
 </script>
 
